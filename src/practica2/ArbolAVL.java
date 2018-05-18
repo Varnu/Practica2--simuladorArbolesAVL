@@ -5,8 +5,6 @@
  */
 package practica2;
 
-import java.util.Stack;
-
 /**
  *
  * @author jairo
@@ -14,405 +12,196 @@ import java.util.Stack;
 public class ArbolAVL {
 
     private NodoAVL raiz;
+    private int estadoProceso;
 
     public ArbolAVL() {
         this.raiz = null;
+        this.estadoProceso = 0;
     }
 
     public NodoAVL retornaRaiz() {
         return this.raiz;
+    }
+    public int retornaEstadoProceso(){
+        int x = estadoProceso;
+        estadoProceso = 0;
+        return x;
     }
 
     public void asignaRaiz(NodoAVL x) {
         raiz = x;
     }
 
-    public int insertaNodoEnAVL(Object d) {
-        NodoAVL x = new NodoAVL(d);
-        NodoAVL p, q, pivote, pp;
-        int aux;
-        if (this.retornaRaiz() == null) {
-            raiz = x;
-            return 0;
+    public void insertar(int dato) {
+        this.asignaRaiz(insertar(this.retornaRaiz(), dato));
+    }
+    public void eliminar(int dato){
+        this.asignaRaiz(eliminar(this.retornaRaiz(), dato));
+    }
+
+    private NodoAVL insertar(NodoAVL nodo, int dato) {
+        if (nodo == null) {
+            estadoProceso = 0;
+            return new NodoAVL(dato);
         }
-        p = raiz;
-        q = null;
-        pivote = raiz;
-        pp = null;
-        while (p != null) {
-            if (p.retornaDato() == d) {
-                return -1;
-            }
-            if (p.retornaFb() != 0) {
-                pivote = p;
-                pp = q;
-            }
-            q = p;
-            if ((int) d < (int) p.retornaDato()) {
-                p = p.retornaLi();
-            } else {
-                p = p.retornaLd();
-            }
+        if (dato == (int) nodo.retornaDato()) {
+            estadoProceso = 1;
+            System.out.println("Dato repetido");
+            return nodo;
         }
-        if ((int) d < (int) q.retornaDato()) {
-            q.asignaLi(x);
+        if (dato < (int) nodo.retornaDato()) {
+            nodo.asignaLi(insertar(nodo.retornaLi(), dato));
         } else {
-            q.asignaLd(x);
+            nodo.asignaLd(insertar(nodo.retornaLd(), dato));
         }
-        aux = (int) pivote.retornaFb();
-        if ((int) d < (int) pivote.retornaDato()) {
-            pivote.asignaFb(aux + 1);
-            q = pivote.retornaLi();
-        } else {
-            pivote.asignaFb(aux - 1);
-            q = pivote.retornaLd();
+        nodo.asignaAltura(Math.max(this.altura(nodo.retornaLi()), this.altura(nodo.retornaLd())) + 1);
+
+        nodo = resolverDesbalanceIns(dato, nodo);
+
+        return nodo;
+    }
+
+    private NodoAVL resolverDesbalanceIns(int dato, NodoAVL nodo) {
+        int factBalance = this.retornaBalance(nodo);
+        if (factBalance > 1 && dato < (int) nodo.retornaLi().retornaDato()) {
+            return rotacionALaDer(nodo);
         }
-        p = q;
-        while (p != x) {
-            if ((int) d < (int) p.retornaDato()) {
-                p.asignaFb(1);
-                p = p.retornaLi();
-            } else {
-                p.asignaFb(-1);
-                p = p.retornaLd();
+        if (factBalance < -1 && dato > (int) nodo.retornaLd().retornaDato()) {
+            return rotacionALaIzq(nodo);
+        }
+        if (factBalance > 1 && dato > (int) nodo.retornaLi().retornaDato()) {
+            nodo.asignaLi(rotacionALaIzq(nodo.retornaLi()));
+            return rotacionALaDer(nodo);
+        }
+        if (factBalance < -1 && dato < (int) nodo.retornaLd().retornaDato()) {
+            nodo.asignaLd(rotacionALaDer(nodo.retornaLd()));
+            return rotacionALaIzq(nodo);
+        }
+        return nodo;
+    }
+    private NodoAVL eliminar(NodoAVL nodo, int dato){
+        if(nodo == null){
+            estadoProceso = 1;
+            return null;
+        }
+        if(dato < (int)nodo.retornaDato()){
+            nodo.asignaLi(eliminar(nodo.retornaLi(), dato));
+        }else if(dato > (int)nodo.retornaDato()){
+            nodo.asignaLd(eliminar(nodo.retornaLd(), dato));
+        }else{
+            estadoProceso = 0;
+            if(nodo.retornaLi()==null && nodo.retornaLd() == null){
+                System.out.println("eliminando hoja");
+                return null;
             }
-        }
-        if (Math.abs(pivote.retornaFb()) < 2) {
-            return 0;
-        }
-        if (pivote.retornaFb() == 2) {
-            if (q.retornaFb() == 1) {
-                unaRotALaDer(pivote, q);
-            } else {
-                q = dobleRotALaDer(pivote, q);
+            if(nodo.retornaLi()== null){
+                System.out.println("removiendo hijo derecho");
+                NodoAVL tempNodo = nodo.retornaLd();
+                nodo = null;
+                return tempNodo;
+            }else if(nodo.retornaLd() == null){
+                System.out.println("Removiendo hijo izquierdo");
+                NodoAVL tempNodo = nodo.retornaLi();
+                nodo = null;
+                return tempNodo;
             }
-        } else {
-            if (q.retornaFb() == -1) {
-                unaRotALaIzq(pivote, q);
-            } else {
-                dobleRotALaIzq(pivote, q);
+            System.out.println("Removiendo con 2 hijos");
+            NodoAVL tempNodo = this.retornaPredecesor(nodo.retornaLi());
+            nodo.asignaDato(tempNodo.retornaDato());
+            nodo.asignaLi(eliminar(nodo.retornaLi(), (int)tempNodo.retornaDato()));
+        }
+        nodo.asignaAltura(Math.max(this.altura(nodo.retornaLi()), this.altura(nodo.retornaLd())) + 1);  
+        return resolverDesbalanceDel(nodo);
+    }
+    private NodoAVL resolverDesbalanceDel(NodoAVL nodo){
+        int factBalance = this.retornaBalance(nodo);
+        if(factBalance > 1){
+            if(this.retornaBalance(nodo.retornaLi())<0){
+                nodo.asignaLi(rotacionALaIzq(nodo.retornaLi()));
             }
+            return rotacionALaDer(nodo);
         }
-        if (pivote == this.retornaRaiz()) {
-            this.asignaRaiz(q);
-            return 0;
+        if(factBalance < -1){
+            if(this.retornaBalance(nodo.retornaLd())>0){
+                nodo.asignaLd(rotacionALaDer(nodo.retornaLd()));
+            }
+            return rotacionALaIzq(nodo);
         }
-        if (pp.retornaLi() == pivote) {
-            pp.asignaLi(q);
-        } else {
-            pp.asignaLd(q);
-        }
-        return 0;
+        return nodo;
+    }
+    /**
+     * Realiza una rotacion a la derecha desde un nodo ingresado como parametro
+     * que tiene un factor de balance superior a 1 o inferior a -1
+     *
+     * @param nodo nodo de la clase NodoAVL que tiene un factor de balance
+     * superior a 1 o inferior a -1
+     * @return La nueva raiz del subarbol.
+     */
+    private NodoAVL retornaPredecesor(NodoAVL nodo){
+       NodoAVL predecesor = nodo;
+       while(predecesor.retornaLd() != null){
+           predecesor = predecesor.retornaLd();
+       }
+       return predecesor;
+    }
+    private NodoAVL rotacionALaDer(NodoAVL nodo) {
+        System.out.println("Rotando a la derecha");
+        NodoAVL tempNodoIzq = nodo.retornaLi();
+        NodoAVL t = tempNodoIzq.retornaLd();
+        tempNodoIzq.asignaLd(nodo);
+        nodo.asignaLi(t);
+        nodo.asignaAltura(Math.max(altura(nodo.retornaLi()), altura(nodo.retornaLd())) + 1);
+        tempNodoIzq.asignaAltura(Math.max(altura(tempNodoIzq.retornaLi()), altura(tempNodoIzq.retornaLd())) + 1);
+
+        return tempNodoIzq;
     }
 
-    public void unaRotALaDer(NodoAVL p, NodoAVL q) {
-        p.asignaLi(q.retornaLd());
-        q.asignaLd(p);
-        p.asignaFb(0);
-        q.asignaFb(0);
+    private NodoAVL rotacionALaIzq(NodoAVL nodo) {
+        System.out.println("Rotando a la izquierda");
+        NodoAVL tempNodoDer = nodo.retornaLd();
+        NodoAVL t = tempNodoDer.retornaLi();
+        tempNodoDer.asignaLi(nodo);
+        nodo.asignaLd(t);
+        nodo.asignaAltura(Math.max(altura(nodo.retornaLi()), altura(nodo.retornaLd())) + 1);
+        tempNodoDer.asignaAltura(Math.max(altura(tempNodoDer.retornaLi()), altura(tempNodoDer.retornaLd())) + 1);
+
+        return tempNodoDer;
     }
 
-    public void unaRotALaIzq(NodoAVL p, NodoAVL q) {
-        p.asignaLd(q.retornaLi());
-        q.asignaLi(p);
-        p.asignaFb(0);
-        q.asignaFb(0);
-    }
-
-    public NodoAVL dobleRotALaIzq(NodoAVL p, NodoAVL q) {
-        NodoAVL r = q.retornaLi();
-        q.asignaLi(r.retornaLd());
-        r.asignaLd(q);
-        p.asignaLd(r.retornaLi());
-        r.asignaLi(p);
-        switch (r.retornaFb()) {
-            case 0:
-                p.asignaFb(0);
-                q.asignaFb(0);
-                break;
-            case 1:
-                p.asignaFb(-1);
-                q.asignaFb(0);
-                break;
-            case -1:
-                p.asignaFb(0);
-                q.asignaFb(1);
-                break;
+    public void inOrden(NodoAVL raiz) {
+        if (raiz != null) {
+            inOrden(raiz.retornaLi());
+            System.out.print(" " + raiz.retornaDato() + " ");
+            inOrden(raiz.retornaLd());
         }
-        r.asignaFb(0);
-        q = r;
-        return q;
     }
 
-    public NodoAVL dobleRotALaDer(NodoAVL p, NodoAVL q) {
-        NodoAVL r = q.retornaLd();
-        q.asignaLd(r.retornaLi());
-        r.asignaLi(q);
-        p.asignaLi(r.retornaLd());
-        r.asignaLd(p);
-        switch (r.retornaFb()) {
-            case 0:
-                p.asignaFb(0);
-                q.asignaFb(0);
-                break;
-            case 1:
-                p.asignaFb(-1);
-                q.asignaFb(0);
-                break;
-            case -1:
-                p.asignaFb(0);
-                q.asignaFb(1);
-                break;
+    public void preOrden(NodoAVL raiz) {
+        if (raiz != null) {
+            System.out.print(" " + raiz.retornaDato() + " ");
+            preOrden(raiz.retornaLi());
+            preOrden(raiz.retornaLd());
         }
-        r.asignaFb(0);
-        q = r;
-        return q;
+    }
+    public void posOrden(NodoAVL raiz) {
+        if (raiz != null) {
+            posOrden(raiz.retornaLi());
+            posOrden(raiz.retornaLd());
+            System.out.print(" " + raiz.retornaDato() + " ");
+        }
     }
 
-    public int eliminaNodoEnAVL(Object d) {
-        Stack pila = new Stack();
-        NodoAVL p, q, t, r;
-        boolean encontro, terminar;
-        int llave, accion;
-        if (this.retornaRaiz() == null) {
-            System.out.println("arbol vacio");
+    private int altura(NodoAVL nodo) {
+        if (nodo == null) {
             return -1;
         }
-        encontro = false;
-        terminar = false;
-        p = this.retornaRaiz();
-        while (!encontro && p != null) {
-            pila.push(p);
-            if ((int) d < (int) p.retornaDato()) {
-                p = p.retornaLi();
-            } else if ((int) d > (int) p.retornaDato()) {
-                p = p.retornaLd();
-            } else {
-                encontro = true;
-            }
-        }
-        if (!encontro) {
-            System.out.println("Dato no existente en arbol");
-            return -2;
-        }
-        t = null;
-        p = (NodoAVL) pila.pop();
-        llave = (int) p.retornaDato();
-        if (p.retornaLi() == null && p.retornaLd() == null) {
-            accion = 0;
-        } else if (p.retornaLd() == null) {
-            accion = 1;
-        } else if (p.retornaLi() == null) {
-            accion = 2;
-        } else {
-            accion = 3;
-        }
-        if (accion == 0 || accion == 1 || accion == 2) {
-            if (!pila.empty()) {
-                q = (NodoAVL) pila.pop();
-                if ((int) llave < (int) q.retornaDato()) {
-                    Object[] k;
-                    switch (accion) {
-                        case 0:
-                        case 1:
-                            q.asignaLi(p.retornaLi());
-                            if (q.retornaLd() != null) {
-                                k = balacearPorDerecha(q, t, terminar);
-                                t = (NodoAVL) k[0];
-                                terminar = (boolean) k[1];
-                            } else {
-                                return 0;
-                            }
-                            break;
-                        case 2:
-                            if (q.retornaLd() != null) {
-                                q.asignaLi(p.retornaLd());
-                                k = balacearPorDerecha(q, t, terminar);
-                                t = (NodoAVL) k[0];
-                                terminar = (boolean) k[1];
-                            } else {
-                                return 0;
-                            }
-                            break;
-                    }
-                } else {
-                    Object[] k;
-                    switch (accion) {
-                        case 0:
-                        case 2:
-                            q.asignaLd(p.retornaLd());
-                            k = balacearPorIzquierda(q, t, terminar);
-                            t = (NodoAVL) k[0];
-                            terminar = (boolean) k[1];
-                            break;
-                        case 1:
-                            q.asignaLd(p.retornaLi());
-                            k = balacearPorIzquierda(q, t, terminar);
-                            t = (NodoAVL) k[0];
-                            terminar = (boolean) k[1];
-                            break;
-                    }
-                }
-            } else {
-                switch (accion) {
-                    case 0:
-                        asignaRaiz(null);
-                        terminar = true;
-                        break;
-                    case 1:
-                        asignaRaiz(p.retornaLi());
-                        break;
-                    case 2:
-                        asignaRaiz(p.retornaLd());
-                        break;
-                }
-            }
-
-        } else {
-            pila.push(p);
-            r = p;
-            p = r.retornaLd();
-            q = null;
-            while (p.retornaLi() != null) {
-                pila.push(p);
-                q = p;
-                p = p.retornaLi();
-            }
-            r.asignaDato(p.retornaDato());//Posible error
-            llave = (int) r.retornaDato();//posible error
-            if (q != null) {
-                q.asignaLi(p.retornaLd());
-                Object[] k = balacearPorDerecha(q, t, terminar);
-                t = (NodoAVL) k[0];
-                terminar = (boolean) k[1];
-            } else {
-                r.asignaLd(p.retornaLd());
-                Object[] k = balacearPorIzquierda(r, t, terminar);
-                t = (NodoAVL) k[0];
-                terminar = (boolean) k[1];
-            }
-            q = (NodoAVL) pila.pop();
-        }
-        while (!pila.empty() && !terminar) {
-            q = (NodoAVL) pila.pop();
-            if (llave < (int) q.retornaDato()) {
-                if (t != null) {
-                    q.asignaLi(t);
-                    t = q;
-                }
-                Object[] k = balacearPorDerecha(q, t, terminar);
-                t = (NodoAVL) k[0];
-                terminar = (boolean) k[1];
-            } else {
-                if (t != null) {
-                    q.asignaLd(t);
-                    t = q;
-                }
-                Object[] k = balacearPorIzquierda(q, t, terminar);
-                t = (NodoAVL) k[0];
-                terminar = (boolean) k[1];
-            }
-        }
-        if (t != null) {
-            if (pila.empty()) {
-                this.asignaRaiz(t);
-            } else {
-                q = (NodoAVL) pila.pop();
-                if (llave < (int) q.retornaDato()) {
-                    q.asignaLi(t);
-                } else {
-                    q.asignaLd(t);
-                }
-            }
-        }
-        return 0;
+        return nodo.retornaAltura();
     }
 
-    public Object[] balacearPorIzquierda(NodoAVL q, NodoAVL t, boolean terminar) {
-        Object[] retorno = new Object[2];
-        retorno[0] = t;
-        retorno[1] = terminar;
-        NodoAVL r = null;
-        switch (q.retornaFb()) {
-            case -1:
-                q.asignaFb(0);
-
-                break;
-            case 1:
-                r = q.retornaLi();
-                switch (r.retornaFb()) {
-                    case 1:
-                        unaRotALaDer(q, r);
-                        break;
-                    case -1:
-                        r = dobleRotALaDer(q, r);
-                        break;
-                    case 0:
-                        q.asignaLi(r.retornaLd());
-                        r.asignaLd(q);
-                        r.asignaFb(-1);
-                        retorno[1] = true;
-                        break;
-                }
-                break;
-            case 0:
-                q.asignaFb(1);
-                retorno[1] = true;
-                break;
+    private int retornaBalance(NodoAVL nodo) {
+        if (nodo == null) {
+            return 0;
         }
-
-        return retorno;
+        return altura(nodo.retornaLi()) - altura(nodo.retornaLd());
     }
-
-    public Object[] balacearPorDerecha(NodoAVL q, NodoAVL t, boolean terminar) {
-        Object[] retorno = new Object[2];
-        retorno[0] = t;
-        retorno[1] = terminar;
-        NodoAVL r = null;
-        switch (q.retornaFb()) {
-            case -1:
-                q.asignaFb(0);
-
-                break;
-            case 1:
-                r = q.retornaLd();
-                switch (r.retornaFb()) {
-                    case 1:
-                        unaRotALaIzq(q, r);
-                        break;
-                    case -1:
-                        r = dobleRotALaIzq(q, r);
-                        break;
-                    case 0:
-                        q.asignaLd(r.retornaLd());
-                        r.asignaLi(q);
-                        r.asignaFb(-1);
-                        retorno[1] = true;
-                        break;
-                }
-                break;
-            case 0:
-                q.asignaFb(1);
-                retorno[1] = true;
-                break;
-        }
-
-        return retorno;
-    }
-
-    public void preorden(NodoAVL r) {
-        if (r != null) {
-            System.out.print(" " + r.retornaDato() + " ");
-            preorden(r.retornaLi());
-            preorden(r.retornaLd());
-        }
-    }
-    public void inorden(NodoAVL r) {
-        if (r != null) {
-            inorden(r.retornaLi());
-            System.out.print(" " + r.retornaDato() + " ");
-            inorden(r.retornaLd());
-        }
-    }
-
 }
