@@ -13,12 +13,12 @@ public class NodoAVL {
     Object dato;
     NodoAVL li;
     NodoAVL ld;
-    int fb;
+    int altura;
     public NodoAVL(Object dato){
         this.dato = dato;
         li = null;
         ld = null;
-        fb = 0;
+        altura = 0;
     }
     public void asignaDato(Object dato){
         this.dato = dato;
@@ -29,8 +29,8 @@ public class NodoAVL {
     public void asignaLd(NodoAVL ld){
         this.ld = ld;
     }
-    public void asignaFb(int fb){
-        this.fb = fb;
+    public void asignaAltura(int fb){
+        this.altura = fb;
     }
     public Object retornaDato(){
         return dato;
@@ -41,7 +41,7 @@ public class NodoAVL {
     public NodoAVL retornaLd(){
         return ld;
     }
-    public int retornaFb(){
-        return fb;
+    public int retornaAltura(){
+        return altura;
     }
 }
