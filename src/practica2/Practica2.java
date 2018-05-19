@@ -30,18 +30,9 @@ public class Practica2 {
         a.insertar(30);
         a.insertar(21);
         a.insertar(21);
+        System.out.println("");
+        a.inOrden(a.retornaRaiz());
         
-        a.inorden(a.retornaRaiz());
-        System.out.println(" ");
-        a.preorden(a.retornaRaiz());
-        System.out.println("");
-        a.eliminar(22);
-        
-        System.out.println("");
-        a.inorden(a.retornaRaiz());
-        System.out.println(" ");
-        a.preorden(a.retornaRaiz());
-        System.out.println("");
         
     }
     

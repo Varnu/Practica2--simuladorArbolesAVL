@@ -1,4 +1,4 @@
-/*
+    /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -42,7 +42,9 @@ public class ArbolAVL {
     private NodoAVL insertar(NodoAVL nodo, int dato) {
         if (nodo == null) {
             estadoProceso = 0;
-            return new NodoAVL(dato);
+            NodoAVL x = new NodoAVL(dato);
+            x.asignaAltura(1);
+            return x;
         }
         if (dato == (int) nodo.retornaDato()) {
             estadoProceso = 1;

@@ -30,7 +30,7 @@ public class NodoAVL {
         this.ld = ld;
     }
     public void asignaAltura(int fb){
-        this.altura = fb;
+        this.altura = fb;       
     }
     public Object retornaDato(){
         return dato;
